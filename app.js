@@ -121,12 +121,12 @@ renderKeyUI(); // run on page load
 // PROTECTED TERMS (fetched on load)
 // ============================================================================
 
-let protections = null;
-
-fetch('protected-terms.json')
-  .then(r => r.json())
-  .then(data => { protections = data; })
-  .catch(() => {}); // silent fallback — tool works without protections
+const protectionsPromise = fetch('protected-terms.json')
+  .then(r => {
+    if (!r.ok) throw new Error(`protected-terms.json: HTTP ${r.status}`);
+    return r.json();
+  })
+  .catch(err => { console.warn('[ClearLanguage]', err.message); return null; });
 
 // ============================================================================
 // PLATFORM TONE MAP & PROMPT BUILDER (Task 4)
@@ -145,15 +145,15 @@ const PLATFORM_TONE = {
 function buildProtectionClause(p) {
   if (!p) return '';
   const lines = [];
-  if (p.terms && p.terms.length > 0) {
-    lines.push(`Never change the following terms: ${p.terms.join(', ')}.`);
+  if (Array.isArray(p.terms) && p.terms.length > 0) {
+    lines.push(`Never change the following terms: ${p.terms.map(t => `"${t}"`).join(', ')}.`);
   }
   if (p.rules?.speech_marks)         lines.push('Do not alter anything inside quotation marks.');
   if (p.rules?.proper_nouns)         lines.push('Do not alter capitalised proper nouns.');
   if (p.rules?.scripture_references) lines.push('Do not alter scripture references (e.g. John 3:16, Genesis 1).');
   if (p.rules?.honorifics)           lines.push('Do not alter titles or honorifics (Rev, Pastor, Dr) before names.');
   if (p.rules?.dates_and_times)      lines.push('Do not alter dates or times (e.g. Sunday 15th June, 10:30am).');
-  return lines.length > 0 ? lines.join(' ') + '\n\n' : '';
+  return lines.length > 0 ? lines.join('\n') + '\n\n' : '';
 }
 
 function buildPrompt(text, platform, score, p) {
@@ -176,6 +176,7 @@ ${text}`;
 // ============================================================================
 
 async function callClaude(text, platform, score) {
+  const protections = await protectionsPromise;
   const response = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
     headers: {
