@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Clear Language Tool — Layton Methodist Church</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <header>
+    <div class="logo">LMC</div>
+    <div class="header-text">
+      <strong>Clear Language Tool</strong>
+      <span>Layton Methodist Church</span>
+    </div>
+  </header>
+
+  <main>
+
+    <!-- LEFT PANEL -->
+    <section class="panel panel-left">
+      <div class="panel-title">
+        <span>Your Text</span>
+        <span id="input-badge" class="badge hidden"></span>
+      </div>
+
+      <label for="platform" class="field-label">Output platform</label>
+      <select id="platform">
+        <option value="newsletter">Newsletter / Email</option>
+        <option value="facebook">Facebook Post</option>
+        <option value="instagram">Instagram Caption</option>
+        <option value="press-release">Press Release</option>
+        <option value="leaflet">Leaflet / Printed Flyer</option>
+        <option value="website">Website / Notice Board</option>
+        <option value="talk-notes">Talk Notes</option>
+      </select>
+
+      <textarea id="input-text" placeholder="Paste or type your text here..."></textarea>
+
+      <div id="api-key-bar">
+        <div id="api-key-saved" class="hidden">
+          🔑 API key saved — <button id="change-key-btn" class="link-btn">change</button>
+        </div>
+        <div id="api-key-form">
+          <input id="api-key-input" type="password" placeholder="Enter your Anthropic API key">
+          <button id="save-key-btn">Save key</button>
+        </div>
+      </div>
+
+      <button id="check-btn" disabled>Add API key to continue</button>
+    </section>
+
+    <!-- RIGHT PANEL -->
+    <section class="panel panel-right">
+      <div class="panel-title">
+        <span>Suggested Edit</span>
+        <span id="output-badge" class="badge hidden"></span>
+      </div>
+      <textarea id="output-text" readonly placeholder="Your improved text will appear here..."></textarea>
+      <button id="copy-btn" class="secondary-btn hidden">📋 Copy to clipboard</button>
+
+      <div id="reasoning-section" class="hidden">
+        <div class="panel-title" style="margin-top:16px">Why these changes?</div>
+        <ul id="reasoning-list"></ul>
+      </div>
+    </section>
+
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>
