@@ -60,3 +60,48 @@ inputText.addEventListener('input', () => {
     renderBadge(inputBadge, age);
   }, 500);
 });
+
+// ============================================================================
+// API KEY MANAGEMENT (Task 3)
+// ============================================================================
+
+const apiKeySaved  = document.getElementById('api-key-saved');
+const apiKeyForm   = document.getElementById('api-key-form');
+const apiKeyInput  = document.getElementById('api-key-input');
+const saveKeyBtn   = document.getElementById('save-key-btn');
+const changeKeyBtn = document.getElementById('change-key-btn');
+const checkBtn     = document.getElementById('check-btn');
+
+function getKey() {
+  return localStorage.getItem('cl_api_key') || '';
+}
+
+function renderKeyUI() {
+  const key = getKey();
+  if (key) {
+    apiKeySaved.classList.remove('hidden');
+    apiKeyForm.classList.add('hidden');
+    checkBtn.disabled = false;
+    checkBtn.textContent = 'Check my text →';
+  } else {
+    apiKeySaved.classList.add('hidden');
+    apiKeyForm.classList.remove('hidden');
+    checkBtn.disabled = true;
+    checkBtn.textContent = 'Add API key to continue';
+  }
+}
+
+saveKeyBtn.addEventListener('click', () => {
+  const val = apiKeyInput.value.trim();
+  if (!val) return;
+  localStorage.setItem('cl_api_key', val);
+  apiKeyInput.value = '';
+  renderKeyUI();
+});
+
+changeKeyBtn.addEventListener('click', () => {
+  localStorage.removeItem('cl_api_key');
+  renderKeyUI();
+});
+
+renderKeyUI(); // run on page load
