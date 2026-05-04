@@ -1,0 +1,14 @@
+{
+  "terms": [
+    "Layton Methodist Church",
+    "Forward Project",
+    "Blackpool"
+  ],
+  "rules": {
+    "speech_marks": true,
+    "proper_nouns": true,
+    "scripture_references": true,
+    "honorifics": true,
+    "dates_and_times": true
+  }
+}
