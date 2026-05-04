@@ -19,8 +19,10 @@ function countSyllables(word) {
 
 // Returns UK reading age (integer) or null if text is too short
 function fleschKincaidAge(text) {
-  const sentences = text.split(/[.!?]+/).filter(s => s.trim().length > 0);
-  const words = text.trim().split(/\s+/).filter(w => w.length > 0);
+  const normalised = text.replace(/(\d)\.(\d)/g, '$1$2');
+  const sentences = normalised.split(/[.!?]+/).filter(s => s.trim().length > 0);
+  const words = text.trim().split(/\s+/)
+    .filter(w => w.replace(/[^a-z]/gi, '').length > 0);
   if (sentences.length === 0 || words.length < 5) return null;
   const syllables = words.reduce((sum, w) => sum + countSyllables(w), 0);
   const grade = 0.39 * (words.length / sentences.length)
@@ -38,7 +40,7 @@ function badgeClass(age) {
 
 // Updates a badge element with age text and colour, or hides it
 function renderBadge(el, age) {
-  if (age === null) { el.classList.add('hidden'); return; }
+  if (age === null) { el.textContent = ''; el.classList.add('hidden'); return; }
   el.textContent = `Reading age: ${age}`;
   el.className = `badge ${badgeClass(age)}`;
 }
