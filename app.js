@@ -172,7 +172,17 @@ async function callClaude(text, platform, score) {
 
   const data = await response.json();
   const raw = data.content?.[0]?.text || '';
-  return JSON.parse(raw); // {rewrite, reasoning}
+  const cleaned = raw.replace(/^```(?:json)?\s*/i, '').replace(/\s*```\s*$/, '').trim();
+  let result;
+  try {
+    result = JSON.parse(cleaned);
+  } catch {
+    throw new Error('The response was not in the expected format. Please try again.');
+  }
+  if (typeof result.rewrite !== 'string') {
+    throw new Error('Claude returned an incomplete response. Please try again.');
+  }
+  return result;
 }
 
 // ============================================================================
@@ -211,8 +221,14 @@ checkBtn.addEventListener('click', async () => {
 
     reasoningList.innerHTML = '';
     (result.reasoning || []).forEach(item => {
-      const li = document.createElement('li');
-      li.innerHTML = `• <strong>"${item.original}"</strong> → "${item.replacement}" — ${item.reason}`;
+      const li     = document.createElement('li');
+      const bullet = document.createTextNode('• ');
+      const strong = document.createElement('strong');
+      strong.textContent = `"${item.original}"`;
+      const middle = document.createTextNode(` → "${item.replacement}" — ${item.reason}`);
+      li.appendChild(bullet);
+      li.appendChild(strong);
+      li.appendChild(middle);
       reasoningList.appendChild(li);
     });
     if (result.reasoning?.length) reasoningSection.classList.remove('hidden');
@@ -226,7 +242,15 @@ checkBtn.addEventListener('click', async () => {
 });
 
 copyBtn.addEventListener('click', () => {
-  navigator.clipboard.writeText(outputText.value);
-  copyBtn.textContent = '✓ Copied!';
-  setTimeout(() => { copyBtn.textContent = '📋 Copy to clipboard'; }, 2000);
+  if (!navigator.clipboard) {
+    copyBtn.textContent = 'Copy unavailable (needs HTTPS)';
+    setTimeout(() => { copyBtn.textContent = '📋 Copy to clipboard'; }, 2000);
+    return;
+  }
+  navigator.clipboard.writeText(outputText.value)
+    .then(() => { copyBtn.textContent = '✓ Copied!'; })
+    .catch(() => { copyBtn.textContent = 'Copy failed — please copy manually'; })
+    .finally(() => {
+      setTimeout(() => { copyBtn.textContent = '📋 Copy to clipboard'; }, 2000);
+    });
 });
