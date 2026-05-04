@@ -94,6 +94,13 @@ function renderKeyUI() {
 saveKeyBtn.addEventListener('click', () => {
   const val = apiKeyInput.value.trim();
   if (!val) return;
+  if (!val.startsWith('sk-ant-')) {
+    apiKeyInput.style.borderColor = '#C8202E';
+    apiKeyInput.placeholder = 'Key must start with sk-ant-';
+    apiKeyInput.value = '';
+    return;
+  }
+  apiKeyInput.style.borderColor = '';
   localStorage.setItem('cl_api_key', val);
   apiKeyInput.value = '';
   renderKeyUI();
@@ -102,6 +109,10 @@ saveKeyBtn.addEventListener('click', () => {
 changeKeyBtn.addEventListener('click', () => {
   localStorage.removeItem('cl_api_key');
   renderKeyUI();
+});
+
+apiKeyInput.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') saveKeyBtn.click();
 });
 
 renderKeyUI(); // run on page load
