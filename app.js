@@ -118,6 +118,17 @@ apiKeyInput.addEventListener('keydown', (e) => {
 renderKeyUI(); // run on page load
 
 // ============================================================================
+// PROTECTED TERMS (fetched on load)
+// ============================================================================
+
+let protections = null;
+
+fetch('protected-terms.json')
+  .then(r => r.json())
+  .then(data => { protections = data; })
+  .catch(() => {}); // silent fallback — tool works without protections
+
+// ============================================================================
 // PLATFORM TONE MAP & PROMPT BUILDER (Task 4)
 // ============================================================================
 
@@ -131,12 +142,27 @@ const PLATFORM_TONE = {
   'talk-notes':    'Spoken-word style. Short sentences, personal tone, written to be heard aloud.',
 };
 
-function buildPrompt(text, platform, score) {
+function buildProtectionClause(p) {
+  if (!p) return '';
+  const lines = [];
+  if (p.terms && p.terms.length > 0) {
+    lines.push(`Never change the following terms: ${p.terms.join(', ')}.`);
+  }
+  if (p.rules?.speech_marks)         lines.push('Do not alter anything inside quotation marks.');
+  if (p.rules?.proper_nouns)         lines.push('Do not alter capitalised proper nouns.');
+  if (p.rules?.scripture_references) lines.push('Do not alter scripture references (e.g. John 3:16, Genesis 1).');
+  if (p.rules?.honorifics)           lines.push('Do not alter titles or honorifics (Rev, Pastor, Dr) before names.');
+  if (p.rules?.dates_and_times)      lines.push('Do not alter dates or times (e.g. Sunday 15th June, 10:30am).');
+  return lines.length > 0 ? lines.join(' ') + '\n\n' : '';
+}
+
+function buildPrompt(text, platform, score, p) {
   const tone = PLATFORM_TONE[platform] || '';
   const scoreNote = score !== null ? ` The current reading age is ${score}.` : '';
+  const protectionClause = buildProtectionClause(p);
   return `You are a plain-English writing assistant for a UK Methodist church.${scoreNote} Target reading age: 11 (Flesch-Kincaid UK). 13 is acceptable. Platform: ${platform}. Tone: ${tone}
 
-Fix spelling and grammar. Replace words of 4+ syllables with simpler alternatives where possible. Adjust tone for the platform.
+${protectionClause}Fix spelling and grammar. Replace words of 4+ syllables with simpler alternatives where possible. Adjust tone for the platform.
 
 Return ONLY valid JSON — no markdown, no explanation outside the JSON:
 {"rewrite":"...","reasoning":[{"original":"...","replacement":"...","reason":"..."}]}
@@ -161,7 +187,7 @@ async function callClaude(text, platform, score) {
     body: JSON.stringify({
       model: 'claude-haiku-4-5-20251001',
       max_tokens: 1024,
-      messages: [{ role: 'user', content: buildPrompt(text, platform, score) }],
+      messages: [{ role: 'user', content: buildPrompt(text, platform, score, protections) }],
     }),
   });
 
