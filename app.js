@@ -116,3 +116,117 @@ apiKeyInput.addEventListener('keydown', (e) => {
 });
 
 renderKeyUI(); // run on page load
+
+// ============================================================================
+// PLATFORM TONE MAP & PROMPT BUILDER (Task 4)
+// ============================================================================
+
+const PLATFORM_TONE = {
+  'newsletter':    'Warm, community tone. 150-400 words per section.',
+  'facebook':      'Conversational and friendly. Short paragraphs. End with a call to action.',
+  'instagram':     'Short and visual-first. 1-3 sentences. Hashtags optional.',
+  'press-release': 'Formal, third-person. Use headline, intro, quotes, boilerplate structure.',
+  'leaflet':       'Punchy and scannable. Short sentences, clear headings, no filler.',
+  'website':       'Clear and informative. Use headings, keep language accessible.',
+  'talk-notes':    'Spoken-word style. Short sentences, personal tone, written to be heard aloud.',
+};
+
+function buildPrompt(text, platform, score) {
+  const tone = PLATFORM_TONE[platform] || '';
+  const scoreNote = score !== null ? ` The current reading age is ${score}.` : '';
+  return `You are a plain-English writing assistant for a UK Methodist church.${scoreNote} Target reading age: 11 (Flesch-Kincaid UK). 13 is acceptable. Platform: ${platform}. Tone: ${tone}
+
+Fix spelling and grammar. Replace words of 4+ syllables with simpler alternatives where possible. Adjust tone for the platform.
+
+Return ONLY valid JSON — no markdown, no explanation outside the JSON:
+{"rewrite":"...","reasoning":[{"original":"...","replacement":"...","reason":"..."}]}
+
+Text to improve:
+${text}`;
+}
+
+// ============================================================================
+// CLAUDE API CALL (Task 4)
+// ============================================================================
+
+async function callClaude(text, platform, score) {
+  const response = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': getKey(),
+      'anthropic-version': '2023-06-01',
+      'anthropic-dangerous-direct-browser-access': 'true',
+    },
+    body: JSON.stringify({
+      model: 'claude-haiku-4-5-20251001',
+      max_tokens: 1024,
+      messages: [{ role: 'user', content: buildPrompt(text, platform, score) }],
+    }),
+  });
+
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}));
+    throw new Error(err?.error?.message || `API error ${response.status}`);
+  }
+
+  const data = await response.json();
+  const raw = data.content?.[0]?.text || '';
+  return JSON.parse(raw); // {rewrite, reasoning}
+}
+
+// ============================================================================
+// OUTPUT RENDERING & BUTTON WIRING (Task 4)
+// ============================================================================
+
+const platform         = document.getElementById('platform');
+const outputText       = document.getElementById('output-text');
+const outputBadge      = document.getElementById('output-badge');
+const copyBtn          = document.getElementById('copy-btn');
+const reasoningSection = document.getElementById('reasoning-section');
+const reasoningList    = document.getElementById('reasoning-list');
+
+checkBtn.addEventListener('click', async () => {
+  const text = inputText.value.trim();
+  if (!text) return;
+
+  checkBtn.disabled = true;
+  checkBtn.textContent = 'Checking…';
+  outputText.value = '';
+  outputBadge.textContent = '';
+  outputBadge.classList.add('hidden');
+  copyBtn.classList.add('hidden');
+  reasoningSection.classList.add('hidden');
+
+  try {
+    const score = fleschKincaidAge(inputText.value);
+    const result = await callClaude(text, platform.value, score);
+
+    outputText.value = result.rewrite;
+
+    const outAge = fleschKincaidAge(result.rewrite);
+    renderBadge(outputBadge, outAge);
+
+    copyBtn.classList.remove('hidden');
+
+    reasoningList.innerHTML = '';
+    (result.reasoning || []).forEach(item => {
+      const li = document.createElement('li');
+      li.innerHTML = `• <strong>"${item.original}"</strong> → "${item.replacement}" — ${item.reason}`;
+      reasoningList.appendChild(li);
+    });
+    if (result.reasoning?.length) reasoningSection.classList.remove('hidden');
+
+  } catch (err) {
+    outputText.value = `Error: ${err.message}`;
+  } finally {
+    checkBtn.disabled = false;
+    checkBtn.textContent = 'Check my text →';
+  }
+});
+
+copyBtn.addEventListener('click', () => {
+  navigator.clipboard.writeText(outputText.value);
+  copyBtn.textContent = '✓ Copied!';
+  setTimeout(() => { copyBtn.textContent = '📋 Copy to clipboard'; }, 2000);
+});
