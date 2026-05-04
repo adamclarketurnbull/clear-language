@@ -36,6 +36,7 @@
         <option value="talk-notes">Talk Notes</option>
       </select>
 
+      <label for="input-text" class="sr-only">Your text</label>
       <textarea id="input-text" placeholder="Paste or type your text here..."></textarea>
 
       <div id="api-key-bar">
@@ -57,11 +58,12 @@
         <span>Suggested Edit</span>
         <span id="output-badge" class="badge hidden"></span>
       </div>
+      <label for="output-text" class="sr-only">Suggested edit</label>
       <textarea id="output-text" readonly placeholder="Your improved text will appear here..."></textarea>
       <button id="copy-btn" class="secondary-btn hidden">📋 Copy to clipboard</button>
 
       <div id="reasoning-section" class="hidden">
-        <div class="panel-title" style="margin-top:16px">Why these changes?</div>
+        <div class="panel-title" id="reasoning-title">Why these changes?</div>
         <ul id="reasoning-list"></ul>
       </div>
     </section>

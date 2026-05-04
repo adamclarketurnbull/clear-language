@@ -60,6 +60,7 @@ main {
   letter-spacing: 0.5px;
   color: #555;
 }
+#reasoning-section .panel-title { margin-top: 16px; }
 
 /* Form elements */
 .field-label { font-size: 11px; color: #888; }
@@ -147,6 +148,15 @@ button {
 .badge.amber  { background: #fff8e1; color: #f57c00; }
 .badge.red    { background: #fce4ec; color: #c62828; }
 .hidden { display: none !important; }
+.sr-only {
+  position: absolute;
+  width: 1px; height: 1px;
+  padding: 0; margin: -1px;
+  overflow: hidden;
+  clip: rect(0,0,0,0);
+  white-space: nowrap;
+  border: 0;
+}
 
 /* Reasoning */
 #reasoning-list {
